@@ -1,0 +1,98 @@
+.wrapper {
+  display: flex;
+  flex-direction: row;
+  height: 600px;
+  border: 1px solid #333;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-top: 24px;
+}
+
+.panel {
+  width: 50%;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #333;
+}
+
+.panel:last-child {
+  border-right: none;
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  border-bottom: 1px solid #333;
+  background: #111;
+  flex-shrink: 0;
+}
+
+.panelLabel {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: #888;
+  text-transform: uppercase;
+}
+
+.copyButton {
+  font-size: 12px;
+  padding: 4px 12px;
+  border-radius: 4px;
+  border: 1px solid #444;
+  background: #222;
+  color: #ccc;
+  cursor: pointer;
+}
+
+.copyButton:hover {
+  background: #333;
+}
+
+.textarea {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  background: #1a1a1a;
+  color: #ccc;
+  font-family: monospace;
+  font-size: 13px;
+  padding: 16px;
+  border: none;
+  resize: none;
+  box-sizing: border-box;
+  line-height: 1.6;
+}
+
+.preview {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  font-size: 15px;
+  line-height: 1.7;
+  color: #e0e0e0;
+  background: #111;
+}
+
+.preview h1 { font-size: 1.4rem; font-weight: 600; margin: 0 0 16px; }
+.preview h2 { font-size: 1.1rem; font-weight: 600; margin: 24px 0 8px; }
+.preview h3 { font-size: 1rem; font-weight: 600; margin: 16px 0 6px; }
+.preview p  { margin: 0 0 12px; }
+.preview ul { padding-left: 20px; margin: 0 0 12px; }
+.preview li { margin-bottom: 4px; }
+.preview code {
+  background: #2a2a2a;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 12px;
+}
+.preview pre {
+  background: #2a2a2a;
+  padding: 12px;
+  border-radius: 6px;
+  overflow-x: auto;
+  font-size: 12px;
+  margin: 0 0 12px;
+}

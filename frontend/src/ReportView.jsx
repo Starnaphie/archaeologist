@@ -50,11 +50,25 @@ function repoNameFromUrl(url) {
   }
 }
 
+function Citation({ citation }) {
+  const parts = [
+    citation.file_path,
+    citation.name,
+    citation.kind,
+  ].filter(Boolean)
+  return (
+    <p className={styles.citation}>
+      {parts.join(' · ')}
+    </p>
+  )
+}
+
 export default function ReportView({ report, repoUrl }) {
   const repoName = repoNameFromUrl(repoUrl)
   const modules = report.modules || []
   const incomplete = report.incomplete_features || []
   const graph = report.dependency_graph || ''
+  const citations = report.citations || []
 
   return (
     <article className={styles.report}>
@@ -66,6 +80,13 @@ export default function ReportView({ report, repoUrl }) {
       <section className={styles.section}>
         <h3 className={styles.sectionTitle}>Purpose</h3>
         <p className={styles.purpose}>{report.purpose}</p>
+        {(report.purpose_citations || []).length > 0 && (
+          <div className={styles.citationList}>
+            {report.purpose_citations.map((c, i) => (
+              <Citation key={i} citation={c} />
+            ))}
+          </div>
+        )}
       </section>
 
       <section className={styles.section}>
@@ -73,9 +94,11 @@ export default function ReportView({ report, repoUrl }) {
         {modules.length === 0 ? (
           <p className={styles.empty}>No modules summarized.</p>
         ) : (
+          console.log('modules data:', JSON.stringify(report.modules, null, 2)),
           <table className={styles.table}>
             <thead>
               <tr>
+                <th>File</th>
                 <th>Name</th>
                 <th>Description</th>
               </tr>
@@ -83,12 +106,20 @@ export default function ReportView({ report, repoUrl }) {
             <tbody>
               {modules.map((m, i) => (
                 <tr key={i}>
+                  <td className={styles.modFile}>{m.file_path || '—'}</td>
                   <td className={styles.modName}>{m.name}</td>
                   <td>{m.description}</td>
                 </tr>
               ))}
             </tbody>
           </table>
+        )}
+        {(report.module_citations || []).length > 0 && (
+          <div className={styles.citationList}>
+            {report.module_citations.map((c, i) => (
+              <Citation key={i} citation={c} />
+            ))}
+          </div>
         )}
       </section>
 
@@ -112,7 +143,15 @@ export default function ReportView({ report, repoUrl }) {
             ))}
           </ul>
         )}
+        {(report.incomplete_citations || []).length > 0 && (
+          <div className={styles.citationList}>
+            {report.incomplete_citations.map((c, i) => (
+              <Citation key={i} citation={c} />
+            ))}
+          </div>
+        )}
       </section>
+
     </article>
   )
 }

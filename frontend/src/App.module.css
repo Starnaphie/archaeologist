@@ -65,3 +65,83 @@
   border-radius: 6px;
   color: #c0392b;
 }
+
+.errorBox {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 20px;
+  background: rgba(255, 59, 59, 0.08);
+  border: 2px solid rgba(255, 59, 59, 0.6);
+  border-radius: 6px;
+  color: #c0392b;
+}
+
+.errorBox p {
+  margin: 0;
+}
+
+.resetButton {
+  align-self: flex-start;
+  padding: 8px 14px;
+  font: inherit;
+  font-weight: 500;
+  color: #c0392b;
+  background: transparent;
+  border: 1px solid #c0392b;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.resetButton:hover {
+  background: rgba(255, 59, 59, 0.12);
+}
+
+.modeToggle {
+  display: flex;
+  gap: 6px;
+}
+
+.modeActive {
+  padding: 7px 14px;
+  font: inherit;
+  font-weight: 500;
+  color: var(--bg);
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.modeInactive {
+  padding: 7px 14px;
+  font: inherit;
+  font-weight: 500;
+  color: var(--text-h);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.modeInactive:hover {
+  border-color: var(--accent-border);
+}
+
+.modeInactive:disabled,
+.modeActive:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.readmeBox {
+  padding: 20px 24px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: var(--mono);
+  font-size: 13px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--text-h);
+}

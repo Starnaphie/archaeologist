@@ -28,6 +28,9 @@ def clone_and_manifest(github_url: str) -> dict:
             files.append(os.path.abspath(full_path))
     print(f"Found {len(files)} .py files: {files[:5]}")
 
+    print(f"temp_dir: {temp_dir}")
+    print(f"First 10 files: {files[:10]}")
+
     return {
         "repo_name": repo_name,
         "temp_dir": temp_dir,

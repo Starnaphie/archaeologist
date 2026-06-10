@@ -73,6 +73,13 @@
   white-space: nowrap;
 }
 
+.modFile {
+  font-family: monospace;
+  font-size: 12px;
+  color: #888;
+  white-space: nowrap;
+}
+
 .empty {
   color: var(--text);
   font-style: italic;
@@ -118,4 +125,84 @@
   border-radius: 4px;
   overflow-x: auto;
   color: var(--text-h);
+}
+
+.citationsList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.citationBlock {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.citationHeader {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--text-h);
+  text-align: left;
+}
+
+.citationHeader:hover {
+  background: var(--code-bg);
+}
+
+.citationToggle {
+  font-size: 10px;
+  color: var(--text);
+  width: 12px;
+}
+
+.citationPath {
+  color: var(--text-h);
+  font-weight: 500;
+}
+
+.citationName {
+  color: var(--text);
+}
+
+.citationKind {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text);
+  margin-left: auto;
+}
+
+.citationSource {
+  margin: 0;
+  padding: 12px;
+  font-family: var(--mono);
+  font-size: 12px;
+  background: var(--code-bg);
+  color: var(--text-h);
+  overflow-x: auto;
+  border-top: 1px solid var(--border);
+  white-space: pre-wrap;
+}
+
+.citation {
+  font-size: 0.75rem;
+  color: #888;
+  margin: 2px 0;
+  font-family: monospace;
+}
+
+.citationList {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }

@@ -1,0 +1,6 @@
+# REGRETS.md
+
+If I could do this over, I'd start with a smaller target repo. I spent an embarrassing amount of debugging time chasing hallucinated modules and empty file paths, only to realize the pipeline was pointing at its own source code. Picking a well-scoped abandoned repo from day one, something with 10-20 Python files and a clear purpose, would have shaved hours off the feedback loop.
+I'd also resist the urge to build the multi-agent system before the single-agent system was rock solid. The LangGraph graph added a lot of moving parts before I had confidence in what the individual steps were even returning. Build flat first, layer in complexity after you trust the outputs.
+The README generator was the last thing I touched and probably deserved to be the first post-MVP feature — it's the most immediately useful deliverable and it forced a clarity in the architecture step that the analyze report never quite had.
+Finally: three of the five recommended features are still stubs. Repo Q&A, multi-language support, and the evaluation harness are all genuinely interesting and all genuinely unfinished. A future engineer picking this up should start with Q&A — the FAISS index is already there, the retrieve function works, and a /chat endpoint is maybe a day's work.
