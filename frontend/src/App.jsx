@@ -2,8 +2,10 @@ import { useState } from 'react'
 import ProgressLog from './ProgressLog.jsx'
 import ReportView from './ReportView.jsx'
 import ReadmeView from './ReadmeView.jsx'
+import SlidesGenerator from './SlidesGenerator.jsx'
 import styles from './App.module.css'
 
+// Existing FastAPI backend for Analyze and Generate README modes
 const BACKEND = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'
 
 export default function App() {
@@ -108,7 +110,7 @@ export default function App() {
       </header>
 
       <div className={styles.modeToggle}>
-        {['Analyze', 'Generate README'].map((m) => (
+        {['Analyze', 'Generate README', 'Generate Slides'].map((m) => (
           <button
             key={m}
             type="button"
@@ -181,6 +183,13 @@ export default function App() {
       </div>
       <div style={{ display: mode === 'Generate README' ? 'block' : 'none' }}>
         {readme && <ReadmeView content={readme} />}
+      </div>
+      <div style={{ display: mode === 'Generate Slides' ? 'block' : 'none' }}>
+        <SlidesGenerator
+          onComplete={({ downloadUrl, topic }) => {
+            console.log('[SlidesGenerator] complete:', topic, downloadUrl)
+          }}
+        />
       </div>
     </div>
   )

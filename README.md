@@ -6,6 +6,8 @@ Generate AI-powered archaeology reports for Python repositories. Feed in a GitHu
 
 https://youtu.be/7Rx5fHxdWVI
 
+NEW UPDATED DEMO: https://youtu.be/weYWSsgTvkg
+
 ## Tech stack
 
 ### Backend
@@ -28,19 +30,38 @@ https://youtu.be/7Rx5fHxdWVI
 | **Vite** | Build tool and dev server |
 | **Mermaid** | Dependency graph visualization |
 
+## Top-level directory map
+
+```
+lambdas/    AWS Lambda service code for repository analysis, deck generation, orchestration, summaries, and URL generation
+infra/      AWS CDK infrastructure for API Gateway, Step Functions, Lambda functions, S3, and supporting resources
+frontend/   React/Vite web app for submitting generation requests and viewing results
+```
+
 ## Project structure
 
 ```
 archaeologist/
-├── backend/
-│   ├── main.py              FastAPI app with /analyze (SSE) and /report/{job_id} endpoints
-│   ├── ingestion.py         GitHub repo cloning and Python file discovery
-│   ├── parser.py            Tree-sitter AST parsing; extracts functions, classes, imports
-│   ├── embedder.py          OpenAI embeddings with FAISS indexing for similarity search
-│   ├── agent.py             Report generation pipeline: purpose, architecture, incomplete features
-│   ├── __init__.py          Package initialization
-│   ├── .env                 Environment variables (OPENAI_API_KEY)
-│   └── requirements.txt     Python dependencies (generated from venv)
+├── lambdas/
+│   ├── archaeologist/
+│   │   ├── main.py          FastAPI app with /analyze (SSE) and /report/{job_id} endpoints
+│   │   ├── ingestion.py     GitHub repo cloning and Python file discovery
+│   │   ├── parser.py        Tree-sitter AST parsing; extracts functions, classes, imports
+│   │   ├── embedder.py      OpenAI embeddings with FAISS indexing for similarity search
+│   │   ├── agent.py         Report generation pipeline: purpose, architecture, incomplete features
+│   │   ├── __init__.py      Package initialization
+│   │   ├── .env             Environment variables (OPENAI_API_KEY)
+│   │   ├── requirements.txt Python dependencies
+│   │   └── Dockerfile       Lambda container image definition
+│   ├── slides/              Slide/deck generation Lambda code and supporting assets
+│   ├── orchestrator/        API Gateway entry Lambda that starts the workflow
+│   ├── summarizer/          Summary/outline generation Lambda stub
+│   └── url_generator/       Presigned URL generation Lambda stub
+├── infra/
+│   ├── app.py               CDK app entrypoint
+│   ├── cdk.json             CDK configuration
+│   ├── requirements.txt     CDK Python dependencies
+│   └── stacks/              CDK stack definitions for pipeline and API resources
 ├── frontend/
 │   ├── src/
 │   │   ├── App.jsx          Main form; SSE listener; state management
@@ -76,15 +97,15 @@ cd archaeologist
 ### 2. Backend setup
 ```bash
 # Create and activate virtual environment
-python3 -m venv backend/venv
-source backend/venv/bin/activate  # On Windows: backend\venv\Scripts\activate
+python3 -m venv lambdas/archaeologist/venv
+source lambdas/archaeologist/venv/bin/activate  # On Windows: lambdas\archaeologist\venv\Scripts\activate
 
 # Install dependencies
-pip install -r backend/requirements.txt
+pip install -r lambdas/archaeologist/requirements.txt
 
 # Set up environment variables
-cp backend/.env.example backend/.env
-# Edit backend/.env and add your OpenAI API key:
+cp lambdas/archaeologist/.env.example lambdas/archaeologist/.env
+# Edit lambdas/archaeologist/.env and add your OpenAI API key:
 # OPENAI_API_KEY=sk-...
 ```
 
@@ -106,8 +127,8 @@ This spawns the FastAPI backend on `http://localhost:8000` and the React dev ser
 **Option B: Manual startup**
 ```bash
 # Terminal 1: Backend
-source backend/venv/bin/activate
-uvicorn backend.main:app --reload
+source lambdas/archaeologist/venv/bin/activate
+uvicorn lambdas.archaeologist.main:app --reload
 
 # Terminal 2: Frontend
 cd frontend

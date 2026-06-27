@@ -1,0 +1,69 @@
+{
+  "title": "Satellite Analyzer Architecture Brief",
+  "slides": [
+    {
+      "layout": "title_slide",
+      "title": "Satellite Analyzer",
+      "content": {
+        "subtitle": "Turning raw imagery into actionable land-use intelligence"
+      },
+      "speaker_notes": [
+        "Open by framing the repository as an analyst workflow accelerator.",
+        "Emphasize that the system connects raw scenes to reviewable findings."
+      ],
+      "_paragraph": "Satellite Analyzer helps analysts process imagery and identify meaningful changes across regions.",
+      "_source_index": 0
+    },
+    {
+      "layout": "big_statement",
+      "title": "Core Insight",
+      "content": {
+        "statement": "The repo is built around a simple pipeline: ingest imagery, detect changes, then summarize risks."
+      },
+      "speaker_notes": [
+        "Use this slide to establish the mental model for the rest of the deck.",
+        "Point out that each major module supports one pipeline stage."
+      ],
+      "_paragraph": "The project combines image preprocessing, feature extraction, and report generation for geographic risk review.",
+      "_source_index": 1
+    },
+    {
+      "layout": "two_column",
+      "title": "What Works and What Needs Attention",
+      "content": {
+        "left_header": "Implemented",
+        "left_bullets": [
+          "Scene ingestion and metadata normalization",
+          "Tile comparison across time windows",
+          "Markdown setup instructions"
+        ],
+        "right_header": "Needs Work",
+        "right_bullets": [
+          "Cloud masking is still placeholder logic",
+          "Large-scene processing needs stronger batching"
+        ]
+      },
+      "speaker_notes": [
+        "Balance strengths with known gaps.",
+        "Make clear that the incomplete cloud masking feature affects analysis quality.",
+        "Mention batching as an operational improvement."
+      ],
+      "_paragraph": "The analysis found mature ingestion and comparison modules, plus one placeholder cloud masking feature.",
+      "_source_index": 2
+    },
+    {
+      "layout": "closing",
+      "title": "Recommended Next Step",
+      "content": {
+        "headline": "Prioritize production-grade cloud masking before expanding model coverage.",
+        "cta": "Schedule a focused implementation pass on masking, tests, and validation scenes."
+      },
+      "speaker_notes": [
+        "End with a concrete action instead of a broad roadmap.",
+        "Tie the recommendation back to the most important incomplete feature."
+      ],
+      "_paragraph": "Cloud masking is the clearest blocker before the tool can support reliable analyst workflows.",
+      "_source_index": 3
+    }
+  ]
+}

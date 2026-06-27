@@ -1,1 +1,9 @@
-backend/.env
+.env
+**/.env
+lambdas/**/node_modules/
+lambdas/**/__pycache__/
+lambdas/**/.venv/
+lambdas/**/venv/
+infra/.venv/
+infra/venv/
+cdk.out/
