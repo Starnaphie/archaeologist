@@ -1,9 +1,7 @@
 .env
 **/.env
-lambdas/**/node_modules/
-lambdas/**/__pycache__/
-lambdas/**/.venv/
-lambdas/**/venv/
-infra/.venv/
-infra/venv/
+**/.venv/
+**/venv/
+**/__pycache__/
+**/node_modules/
 cdk.out/

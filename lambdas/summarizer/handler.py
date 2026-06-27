@@ -24,6 +24,9 @@ def handler(event: dict, context) -> dict:
             parsed.topic,
             parsed.description,
             parsed.repo_source,
+            parsed.audience,
+            parsed.tone,
+            parsed.num_slides,
         )
 
         return build_output(
@@ -31,6 +34,9 @@ def handler(event: dict, context) -> dict:
             outline_key,
             parsed.repo_source,
             parsed.topic,
+            parsed.audience,
+            parsed.tone,
+            parsed.num_slides,
         )
     except Exception as e:
         logger.error(f"Summarizer failed: {e}", exc_info=True)

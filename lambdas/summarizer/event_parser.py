@@ -10,6 +10,9 @@ class SummarizerEvent:
     repo_source: str  # Original repo URL or local path — passed through to slides Lambda
     topic: str  # User-submitted topic
     description: str = ""  # Optional additional context
+    audience: str = ""
+    tone: str = "professional"
+    num_slides: int | None = None
 
 
 def parse_event(event: dict) -> SummarizerEvent:
@@ -27,12 +30,18 @@ def parse_event(event: dict) -> SummarizerEvent:
 
     repo_source = event.get("repo_source", "")
     description = event.get("description", "")
+    audience = event.get("audience", "")
+    tone = event.get("tone", "professional")
+    num_slides = event.get("num_slides", None)
     return SummarizerEvent(
         execution_id=execution_id,
         findings_key=findings_key,
         repo_source=repo_source,
         topic=topic,
         description=description,
+        audience=audience,
+        tone=tone,
+        num_slides=num_slides,
     )
 
 
@@ -41,6 +50,9 @@ def build_output(
     outline_key: str,
     repo_source: str,
     topic: str,
+    audience: str = "",
+    tone: str = "professional",
+    num_slides: int | None = None,
 ) -> dict:
     """Builds Step Functions output for the slides Lambda. outline_key is the S3 key for the generated outline.json."""
     return {
@@ -48,4 +60,7 @@ def build_output(
         "outline_key": outline_key,
         "repo_source": repo_source,
         "topic": topic,
+        "audience": audience,
+        "tone": tone,
+        "num_slides": num_slides,
     }

@@ -44,10 +44,20 @@ def _parse_body(event: dict) -> dict:
     if not repo_source:
         raise ValueError("Request body missing required field: repo_source")
 
+    num_slides = body.get("num_slides", None)
+    if num_slides is not None:
+        if not isinstance(num_slides, int) or isinstance(num_slides, bool):
+            raise ValueError("Request body field num_slides must be an integer")
+        if num_slides < 1 or num_slides > 20:
+            raise ValueError("Request body field num_slides must be between 1 and 20")
+
     return {
         "topic": topic,
         "repo_source": repo_source,
         "description": body.get("description", ""),
+        "audience": body.get("audience", ""),
+        "tone": body.get("tone", "professional"),
+        "num_slides": num_slides,
     }
 
 
@@ -81,6 +91,9 @@ def handler(event: dict, context) -> dict:
                 "topic": body["topic"],
                 "repo_source": body["repo_source"],
                 "description": body["description"],
+                "audience": body["audience"],
+                "tone": body["tone"],
+                "num_slides": body.get("num_slides"),
             }
         )
         response = _get_sfn_client().start_execution(

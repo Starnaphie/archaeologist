@@ -7,7 +7,7 @@ from lambdas.shared.s3_io import read_json, write_json, build_key
 from lambdas.shared.validation import load_and_validate_outline
 from lambdas.slides.openai_agent import generate_outline
 
-from .context_builder import build_description, infer_audience
+from .context_builder import build_description
 
 
 logger = logging.getLogger(__name__)
@@ -19,6 +19,9 @@ def run_summarizer(
     topic: str,
     description: str,
     repo_source: str,
+    audience: str,
+    tone: str,
+    num_slides: int | None,
 ) -> str:
     findings_raw = read_json(findings_key)
     logger.info(
@@ -30,7 +33,6 @@ def run_summarizer(
     if description:
         enriched_description = description + "\n\n" + enriched_description
 
-    audience = infer_audience(findings_raw, topic)
     logger.info(
         f"Built context: audience='{audience}', "
         f"description length={len(enriched_description)}"
@@ -39,8 +41,8 @@ def run_summarizer(
     outline = generate_outline(
         topic=topic,
         audience=audience,
-        num_slides=None,
-        tone="professional",
+        num_slides=num_slides,
+        tone=tone,
         description=enriched_description,
     )
     logger.info(

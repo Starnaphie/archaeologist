@@ -13,9 +13,11 @@ const STATUS_LABELS = {
   ABORTED: 'Pipeline aborted',
 }
 
-export default function SlidesGenerator({ onComplete }) {
+export default function SlidesGenerator({ onComplete, repoUrl = '' }) {
   const [topic, setTopic] = useState('')
-  const [repoSource, setRepoSource] = useState('')
+  const [audience, setAudience] = useState('')
+  const [tone, setTone] = useState('professional')
+  const [numSlides, setNumSlides] = useState('')
   const [description, setDescription] = useState('')
   const [status, setStatus] = useState('idle')
   const [progressEvents, setProgressEvents] = useState([])
@@ -41,12 +43,12 @@ export default function SlidesGenerator({ onComplete }) {
     if (status === 'running') return
 
     if (!topic.trim()) {
-      setError('Presentation topic is required.')
+      setError('Please enter a presentation topic.')
       return
     }
 
-    if (!repoSource.trim()) {
-      setError('Repository source is required.')
+    if (!audience.trim()) {
+      setError('Please enter a target audience.')
       return
     }
 
@@ -60,8 +62,11 @@ export default function SlidesGenerator({ onComplete }) {
     try {
       const { execution_arn, execution_id } = await startPipeline({
         topic: topic.trim(),
-        repoSource: repoSource.trim(),
+        repoSource: repoUrl,
         description: description.trim(),
+        audience: audience.trim(),
+        tone,
+        numSlides: numSlides ? parseInt(numSlides) : null,
       })
 
       setExecutionArn(execution_arn)
@@ -105,7 +110,9 @@ export default function SlidesGenerator({ onComplete }) {
   function handleReset() {
     stopPolling()
     setTopic('')
-    setRepoSource('')
+    setAudience('')
+    setTone('professional')
+    setNumSlides('')
     setDescription('')
     setStatus('idle')
     setProgressEvents([])
@@ -118,36 +125,77 @@ export default function SlidesGenerator({ onComplete }) {
     <div className={styles.app}>
       {(status === 'idle' || status === 'error') && (
         <form className={styles.form} onSubmit={handleSubmit}>
-          <input
-            className={styles.input}
-            type="text"
-            placeholder="Presentation topic e.g. 'How RAG works'"
-            value={topic}
-            onChange={(e) => setTopic(e.target.value)}
-            disabled={status === 'running'}
-            required
-          />
-          <input
-            className={styles.input}
-            type="url"
-            placeholder="https://github.com/owner/repo"
-            value={repoSource}
-            onChange={(e) => setRepoSource(e.target.value)}
-            disabled={status === 'running'}
-            required
-          />
-          <input
-            className={styles.input}
-            type="text"
-            placeholder="Additional context (optional)"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            disabled={status === 'running'}
-          />
+          <label className={styles.label}>
+            Presentation topic
+            <input
+              type="text"
+              placeholder="e.g. How this repo works"
+              value={topic}
+              onChange={(e) => setTopic(e.target.value)}
+              disabled={status === 'running'}
+              required
+              className={styles.input}
+            />
+          </label>
+          <label className={styles.label}>
+            Audience
+            <input
+              type="text"
+              placeholder="e.g. Software engineers new to ML"
+              value={audience}
+              onChange={(e) => setAudience(e.target.value)}
+              disabled={status === 'running'}
+              required
+              className={styles.input}
+            />
+          </label>
+          <div className={styles.row}>
+            <label className={styles.label}>
+              Tone
+              <select
+                value={tone}
+                onChange={(e) => setTone(e.target.value)}
+                disabled={status === 'running'}
+                className={styles.select}
+              >
+                <option value="professional">Professional</option>
+                <option value="casual">Casual</option>
+                <option value="academic">Academic</option>
+              </select>
+            </label>
+            <label className={styles.label}>
+              Max slides
+              <select
+                value={numSlides}
+                onChange={(e) => setNumSlides(e.target.value)}
+                disabled={status === 'running'}
+                className={styles.select}
+              >
+                <option value="">Auto (up to 20)</option>
+                <option value="5">5</option>
+                <option value="8">8</option>
+                <option value="10">10</option>
+                <option value="12">12</option>
+                <option value="15">15</option>
+                <option value="20">20</option>
+              </select>
+            </label>
+          </div>
+          <label className={styles.label}>
+            Additional context (optional)
+            <input
+              type="text"
+              placeholder="e.g. Focus on the ML pipeline"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              disabled={status === 'running'}
+              className={styles.input}
+            />
+          </label>
           <button
             className={styles.button}
             type="submit"
-            disabled={status === 'running' || !topic.trim() || !repoSource.trim()}
+            disabled={status === 'running' || !topic.trim() || !audience.trim()}
           >
             {status === 'running' ? 'Generating…' : 'Generate Slides'}
           </button>

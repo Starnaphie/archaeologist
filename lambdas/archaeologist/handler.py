@@ -111,6 +111,9 @@ def handler(event: dict, context) -> dict:
             parsed.repo_source,
             parsed.topic,
             parsed.description,
+            parsed.audience,
+            parsed.tone,
+            parsed.num_slides,
         )
     except Exception as e:
         logger.error(f"Archaeologist failed: {e}", exc_info=True)

@@ -2,14 +2,13 @@ import { useState } from 'react'
 import ProgressLog from './ProgressLog.jsx'
 import ReportView from './ReportView.jsx'
 import ReadmeView from './ReadmeView.jsx'
-import SlidesGenerator from './SlidesGenerator.jsx'
+import SlidesTab from './SlidesTab.jsx'
 import styles from './App.module.css'
 
 // Existing FastAPI backend for Analyze and Generate README modes
 const BACKEND = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'
 
 export default function App() {
-  const [mode, setMode] = useState('Analyze')
   const [url, setUrl] = useState('')
   const [status, setStatus] = useState('idle')
   const [jobId, setJobId] = useState(null)
@@ -18,12 +17,98 @@ export default function App() {
   const [report, setReport] = useState(null)
   const [readme, setReadme] = useState(null)
   const [error, setError] = useState(null)
+  const [generateReadme, setGenerateReadme] = useState(false)
+  const [generateSlides, setGenerateSlides] = useState(false)
+  const [activeTab, setActiveTab] = useState('analysis')
 
-  function onModeChange(newMode) {
-    setMode(newMode)
-    setError(null)
-    setJobId(null)
-    setStatus('idle')
+  async function runAnalysis() {
+    const res = await fetch(`${BACKEND}/analyze`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
+      body: JSON.stringify({ github_url: url.trim() }),
+    })
+    if (!res.ok || !res.body) throw new Error(`backend responded ${res.status}`)
+
+    const reader = res.body.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ''
+
+    while (true) {
+      const { value, done } = await reader.read()
+      if (done) break
+      const chunk = decoder.decode(value, { stream: true })
+      console.log('[SSE chunk]', JSON.stringify(chunk))
+      buffer += chunk
+      const blocks = buffer.split('\r\n\r\n')
+      buffer = blocks.pop() ?? ''
+      for (const block of blocks) {
+        if (!block.trim()) continue
+        let eventType = null
+        for (const line of block.split('\r\n')) {
+          if (line.startsWith('event: ')) {
+            eventType = line.slice(7).trim()
+          } else if (line.startsWith('data: ')) {
+            const data = line.slice(6).trim()
+            if (eventType === 'job_id') setJobId(data)
+            if (eventType === 'progress') {
+              setAnalyzeProgress(prev => [...prev, data])
+            }
+            if (eventType === 'done') {
+              console.log('done event data length:', data.length)
+              console.log('done event data first 100 chars:', data.slice(0, 100))
+              setReport(JSON.parse(data))
+            }
+            if (eventType === 'error') throw new Error(data)
+            eventType = null
+          }
+        }
+      }
+    }
+  }
+
+  async function runReadme() {
+    const res = await fetch(`${BACKEND}/generate-readme`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
+      body: JSON.stringify({ github_url: url.trim() }),
+    })
+    if (!res.ok || !res.body) throw new Error(`backend responded ${res.status}`)
+
+    const reader = res.body.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ''
+
+    while (true) {
+      const { value, done } = await reader.read()
+      if (done) break
+      const chunk = decoder.decode(value, { stream: true })
+      console.log('[SSE chunk]', JSON.stringify(chunk))
+      buffer += chunk
+      const blocks = buffer.split('\r\n\r\n')
+      buffer = blocks.pop() ?? ''
+      for (const block of blocks) {
+        if (!block.trim()) continue
+        let eventType = null
+        for (const line of block.split('\r\n')) {
+          if (line.startsWith('event: ')) {
+            eventType = line.slice(7).trim()
+          } else if (line.startsWith('data: ')) {
+            const data = line.slice(6).trim()
+            if (eventType === 'job_id') setJobId(data)
+            if (eventType === 'progress') {
+              setReadmeProgress(prev => [...prev, data])
+            }
+            if (eventType === 'done') {
+              console.log('done event data length:', data.length)
+              console.log('done event data first 100 chars:', data.slice(0, 100))
+              setReadme(JSON.parse(data).content)
+            }
+            if (eventType === 'error') throw new Error(data)
+            eventType = null
+          }
+        }
+      }
+    }
   }
 
   async function onSubmit(e) {
@@ -31,67 +116,22 @@ export default function App() {
     if (!url.trim() || status === 'running') return
     setStatus('running')
     setJobId(null)
-    if (mode === 'Generate README') {
-      setReadme(null)
-      setReadmeProgress([])
-    } else {
-      setReport(null)
-      setAnalyzeProgress([])
-    }
+    setReport(null)
+    setReadme(null)
+    setAnalyzeProgress([])
+    setReadmeProgress([])
     setError(null)
-
-    const endpoint = mode === 'Generate README' ? '/generate-readme' : '/analyze'
+    setActiveTab('analysis')
 
     try {
-      const res = await fetch(`${BACKEND}${endpoint}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
-        body: JSON.stringify({ github_url: url.trim() }),
-      })
-      if (!res.ok || !res.body) throw new Error(`backend responded ${res.status}`)
+      // Phase 1: always run analysis.
+      await runAnalysis()
 
-      const reader = res.body.getReader()
-      const decoder = new TextDecoder()
-      let buffer = ''
-
-      while (true) {
-        const { value, done } = await reader.read()
-        if (done) break
-        const chunk = decoder.decode(value, { stream: true })
-        console.log('[SSE chunk]', JSON.stringify(chunk))
-        buffer += chunk
-        const blocks = buffer.split('\r\n\r\n')
-        buffer = blocks.pop() ?? ''
-        for (const block of blocks) {
-          if (!block.trim()) continue
-          let eventType = null
-          for (const line of block.split('\r\n')) {
-            if (line.startsWith('event: ')) {
-              eventType = line.slice(7).trim()
-            } else if (line.startsWith('data: ')) {
-              const data = line.slice(6).trim()
-              if (eventType === 'job_id') setJobId(data)
-              if (eventType === 'progress') {
-                mode === 'Generate README'
-                  ? setReadmeProgress(prev => [...prev, data])
-                  : setAnalyzeProgress(prev => [...prev, data])
-              }
-              if (eventType === 'done') {
-                console.log('done event mode:', mode)
-                console.log('done event data length:', data.length)
-                console.log('done event data first 100 chars:', data.slice(0, 100))
-                if (mode === 'Generate README') {
-                  setReadme(JSON.parse(data).content)
-                } else {
-                  setReport(JSON.parse(data))
-                }
-              }
-              if (eventType === 'error') setError(data)
-              eventType = null
-            }
-          }
-        }
+      // Phase 2: auto-run readme if checked.
+      if (generateReadme) {
+        await runReadme()
       }
+
       setStatus('done')
     } catch (err) {
       setError(err.message || String(err))
@@ -99,29 +139,12 @@ export default function App() {
     }
   }
 
-  const currentProgress = mode === 'Generate README'
-    ? readmeProgress : analyzeProgress
-
   return (
     <div className={styles.app}>
       <header className={styles.header}>
         <h1>archaeologist</h1>
         <p className={styles.subtitle}>Dig through a GitHub repo.</p>
       </header>
-
-      <div className={styles.modeToggle}>
-        {['Analyze', 'Generate README', 'Generate Slides'].map((m) => (
-          <button
-            key={m}
-            type="button"
-            className={mode === m ? styles.modeActive : styles.modeInactive}
-            onClick={() => onModeChange(m)}
-            disabled={status === 'running'}
-          >
-            {m}
-          </button>
-        ))}
-      </div>
 
       <form className={styles.form} onSubmit={onSubmit}>
         <input
@@ -133,14 +156,32 @@ export default function App() {
           disabled={status === 'running'}
           required
         />
+        <div className={styles.checkboxGroup}>
+          <label className={styles.checkboxLabel}>
+            <input
+              type="checkbox"
+              checked={generateReadme}
+              onChange={(e) => setGenerateReadme(e.target.checked)}
+              disabled={status === 'running'}
+            />
+            Generate README
+          </label>
+          <label className={styles.checkboxLabel}>
+            <input
+              type="checkbox"
+              checked={generateSlides}
+              onChange={(e) => setGenerateSlides(e.target.checked)}
+              disabled={status === 'running'}
+            />
+            Generate Slides
+          </label>
+        </div>
         <button
           className={styles.button}
           type="submit"
           disabled={status === 'running' || !url.trim()}
         >
-          {status === 'running'
-            ? (mode === 'Generate README' ? 'Generating…' : 'Analyzing…')
-            : (mode === 'Generate README' ? 'Generate' : 'Analyze')}
+          {status === 'running' ? 'Analyzing…' : 'Analyze'}
         </button>
       </form>
 
@@ -164,6 +205,9 @@ export default function App() {
               setReport(null)
               setReadme(null)
               setError(null)
+              setGenerateReadme(false)
+              setGenerateSlides(false)
+              setActiveTab('analysis')
             }}
           >
             Try another repository
@@ -171,26 +215,61 @@ export default function App() {
         </div>
       )}
 
-      <div style={{ display: mode === 'Analyze' ? 'block' : 'none' }}>
-        {analyzeProgress.length > 0 && <ProgressLog events={analyzeProgress} />}
-      </div>
-      <div style={{ display: mode === 'Generate README' ? 'block' : 'none' }}>
-        {readmeProgress.length > 0 && <ProgressLog events={readmeProgress} />}
-      </div>
+      {/* Dynamic tabs — only show when there is content to display */}
+      {(report || readme || (generateSlides && status === 'done')) && (
+        <>
+          <div className={styles.tabs}>
+            <button
+              className={activeTab === 'analysis' ? `${styles.tab} ${styles.tabActive}` : styles.tab}
+              onClick={() => setActiveTab('analysis')}
+            >
+              Analysis
+            </button>
+            {generateReadme && readme && (
+              <button
+                className={activeTab === 'readme' ? `${styles.tab} ${styles.tabActive}` : styles.tab}
+                onClick={() => setActiveTab('readme')}
+              >
+                README
+              </button>
+            )}
+            {generateSlides && (report || status === 'done') && (
+              <button
+                className={activeTab === 'slides' ? `${styles.tab} ${styles.tabActive}` : styles.tab}
+                onClick={() => setActiveTab('slides')}
+              >
+                Slides
+              </button>
+            )}
+          </div>
 
-      <div style={{ display: mode === 'Analyze' ? 'block' : 'none' }}>
-        {report && <ReportView report={report} repoUrl={url} />}
-      </div>
-      <div style={{ display: mode === 'Generate README' ? 'block' : 'none' }}>
-        {readme && <ReadmeView content={readme} />}
-      </div>
-      <div style={{ display: mode === 'Generate Slides' ? 'block' : 'none' }}>
-        <SlidesGenerator
-          onComplete={({ downloadUrl, topic }) => {
-            console.log('[SlidesGenerator] complete:', topic, downloadUrl)
-          }}
-        />
-      </div>
+          {/* Analysis tab */}
+          <div style={{ display: activeTab === 'analysis' ? 'block' : 'none' }}>
+            {analyzeProgress.length > 0 && <ProgressLog events={analyzeProgress} />}
+            {report && <ReportView report={report} repoUrl={url} />}
+          </div>
+
+          {/* README tab — only if generateReadme was checked */}
+          {generateReadme && (
+            <div style={{ display: activeTab === 'readme' ? 'block' : 'none' }}>
+              {readmeProgress.length > 0 && <ProgressLog events={readmeProgress} />}
+              {readme && <ReadmeView content={readme} />}
+            </div>
+          )}
+
+          {/* Slides tab — only if generateSlides was checked */}
+          {generateSlides && (
+            <div style={{ display: activeTab === 'slides' ? 'block' : 'none' }}>
+              <SlidesTab repoUrl={url} />
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Show progress before any results exist */}
+      {!report && analyzeProgress.length > 0 && (
+        <ProgressLog events={analyzeProgress} />
+      )}
     </div>
   )
 }
