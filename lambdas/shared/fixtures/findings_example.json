@@ -1,0 +1,87 @@
+{
+  "purpose": "Satellite Analyzer processes multispectral satellite imagery to identify land-use changes and surface anomalies. It combines image preprocessing, feature extraction, and report generation so analysts can review geographic risk signals quickly.",
+  "one_liner": "Detects satellite imagery changes and summarizes geographic risk signals quickly.",
+  "modules": [
+    {
+      "name": "ingestion",
+      "description": "Downloads imagery metadata and normalizes source scenes for analysis.",
+      "file_path": "satellite_analyzer/ingestion.py"
+    },
+    {
+      "name": "change_detection",
+      "description": "Compares image tiles across time windows to identify meaningful changes.",
+      "file_path": "satellite_analyzer/change_detection.py"
+    }
+  ],
+  "incomplete_features": [
+    "Cloud masking is planned but currently uses a placeholder threshold."
+  ],
+  "dependency_graph": "graph LR\n  ingestion --> change_detection",
+  "purpose_citations": [
+    {
+      "file_path": "satellite_analyzer/main.py",
+      "name": "analyze_scene",
+      "kind": "function",
+      "source": "def analyze_scene(scene_id):\n    return pipeline.run(scene_id)"
+    }
+  ],
+  "module_citations": [
+    {
+      "file_path": "satellite_analyzer/change_detection.py",
+      "name": "compare_tiles",
+      "kind": "function",
+      "source": "def compare_tiles(before, after):\n    return diff_score(before, after)"
+    }
+  ],
+  "incomplete_citations": [
+    {
+      "file_path": "satellite_analyzer/clouds.py",
+      "name": "mask_clouds",
+      "kind": "function",
+      "source": "def mask_clouds(tile):\n    # TODO: replace placeholder threshold\n    return tile"
+    }
+  ],
+  "repo_owner": {
+    "owner": "acme-corp",
+    "repo_name": "satellite-analyzer",
+    "source": "github-https"
+  },
+  "setup_instructions": {
+    "setup_markdown": "## Prerequisites\n\n- Python 3.12+\n- GDAL-compatible raster tooling\n\n## Installation\n\nInstall dependencies with `pip install -r requirements.txt` and run `python -m satellite_analyzer`.",
+    "files_used": [
+      "requirements.txt"
+    ],
+    "skipped": false
+  },
+  "folder_hierarchy": {
+    "folders": [
+      {
+        "path": "satellite_analyzer",
+        "description": "Core package for imagery ingestion, analysis, and reporting.",
+        "children": [
+          {
+            "path": "satellite_analyzer/models",
+            "description": "Model adapters and scoring utilities."
+          }
+        ]
+      }
+    ],
+    "root_files": [
+      {
+        "path": "README.md",
+        "description": "Project overview and local setup instructions."
+      }
+    ]
+  },
+  "acronyms": [
+    {
+      "acronym": "RAG",
+      "full_name": "Retrieval-Augmented Generation"
+    },
+    {
+      "acronym": "DLQ",
+      "full_name": "Dead Letter Queue"
+    }
+  ],
+  "was_chunked": false
+}

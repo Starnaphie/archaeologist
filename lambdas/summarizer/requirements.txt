@@ -1,0 +1,6 @@
+boto3>=1.34.0
+botocore>=1.34.0
+openai
+python-pptx>=0.6.23
+pydantic
+python-dotenv

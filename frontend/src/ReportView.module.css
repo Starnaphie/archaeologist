@@ -2,6 +2,7 @@
   display: flex;
   flex-direction: column;
   gap: 28px;
+  margin-top: 24px;
   padding: 24px;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -205,4 +206,110 @@
   display: flex;
   flex-direction: column;
   gap: 0;
+}
+
+.loading {
+  color: var(--text);
+  font-style: italic;
+  font-size: 14px;
+}
+
+.folderList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.folderItem {
+  display: flex;
+  gap: 12px;
+  font-size: 14px;
+  align-items: baseline;
+}
+
+.folderPath {
+  font-family: var(--mono);
+  color: var(--text-h);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.folderDesc {
+  color: var(--text);
+}
+
+.setupMarkdown {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-h);
+}
+
+.setupMarkdown h2 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-top: 20px;
+  margin-bottom: 8px;
+  color: var(--text-h);
+}
+
+.setupMarkdown ul,
+.setupMarkdown ol {
+  padding-left: 20px;
+  margin: 6px 0;
+  color: var(--text-h);
+}
+
+.setupMarkdown li {
+  margin-bottom: 4px;
+}
+
+.setupMarkdown code {
+  background: var(--code-bg);
+  color: var(--text-h);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-family: var(--mono);
+}
+
+.setupMarkdown pre {
+  background: var(--code-bg);
+  color: var(--text-h);
+  padding: 12px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 8px 0;
+}
+
+.setupMarkdown pre code {
+  background: transparent;
+  padding: 0;
+  color: var(--text-h);
+}
+
+.setupMarkdown blockquote {
+  border-left: 3px solid var(--accent);
+  padding-left: 12px;
+  color: var(--text);
+  margin: 8px 0;
+}
+
+.setupMarkdown a {
+  color: var(--accent);
+}
+
+.repoOwner {
+  font-size: 13px;
+  color: var(--text);
+  margin-top: 4px;
+}
+
+.repoOwner a {
+  color: var(--text);
+  text-decoration: none;
+}
+
+.repoOwner a:hover {
+  color: var(--text-h);
 }

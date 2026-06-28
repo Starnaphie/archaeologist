@@ -11,8 +11,7 @@ trap cleanup EXIT INT TERM
 
 (
   cd "$ROOT"
-  source backend/venv/bin/activate
-  exec uvicorn backend.main:app --reload
+  exec .venv/bin/python -m uvicorn lambdas.archaeologist.main:app --reload --port 8000
 ) &
 
 (

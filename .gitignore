@@ -1,1 +1,8 @@
-backend/.env
+.env
+**/.env
+!.env.example
+**/.venv/
+**/venv/
+**/__pycache__/
+**/node_modules/
+cdk.out/
