@@ -5,10 +5,12 @@ from typing import List
 import faiss
 import numpy as np
 import tiktoken
-from dotenv import load_dotenv
 from openai import OpenAI
 
-load_dotenv(Path(__file__).resolve().parent / ".env")
+from dotenv import load_dotenv
+
+# Walk up to repo root .env regardless of where the process is invoked from
+load_dotenv(Path(__file__).resolve().parents[2] / ".env")
 
 EMBED_MODEL = "text-embedding-3-small"
 EMBED_DIM = 1536

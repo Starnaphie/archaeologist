@@ -122,3 +122,21 @@ def print_combined_report(reports: list[EvalReport]) -> None:
     print(_render_row({column: column for column in COLUMNS}, widths))
     print(_render_divider(widths))
     print(_render_row(row, widths))
+
+
+def print_tool_call_summary(result: dict) -> None:
+    print("\n── Tool Selection Results ──")
+    print(f"Total cases:  {result['total']}")
+    print(f"Passed:       {result['passed']}")
+    print(f"Failed:       {result['failed']}")
+    print(f"Pass rate:    {result['pass_rate']}%")
+
+    if result["failures"]:
+        print("\nFailed cases:")
+        for failure in result["failures"]:
+            print(
+                f"  ✗ '{failure['instruction']}'\n"
+                f"    expected: {failure['expected']} | got: {failure['got']}"
+            )
+    else:
+        print("\n✓ All cases passed.")

@@ -1,3 +1,4 @@
+import datetime
 import json
 import os
 import tempfile
@@ -637,14 +638,18 @@ def build_presentation(outline: dict, repo_source: str = "") -> SlideResult:
 
     if repo_source:
         meta_path = os.path.splitext(full_output_path)[0] + ".meta.json"
-        with open(meta_path, "w", encoding="utf-8") as meta_file:
-            json.dump(
-                {
-                    "repo_source": repo_source,
-                    "presentation_title": outline["title"],
-                },
-                meta_file,
-                indent=2,
-            )
+        sidecar_path = meta_path
+        meta = {
+            "repo_source": repo_source,
+            "presentation_title": outline["title"],
+            "generated_at": datetime.datetime.utcnow().isoformat() + "Z",
+            "slide_count": len(outline.get("slides", [])),
+            "layout_summary": {
+                layout: sum(1 for s in outline.get("slides", []) if s.get("layout") == layout)
+                for layout in set(s.get("layout", "unknown") for s in outline.get("slides", []))
+            },
+        }
+        with open(sidecar_path, "w", encoding="utf-8") as f:
+            json.dump(meta, f, indent=2)
 
     return SlideResult(file_path=full_output_path, title=outline["title"])

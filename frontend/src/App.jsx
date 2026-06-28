@@ -22,6 +22,8 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('analysis')
 
   async function runAnalysis() {
+    let capturedJobId = null
+    setReport({})
     const res = await fetch(`${BACKEND}/analyze`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
@@ -49,14 +51,19 @@ export default function App() {
             eventType = line.slice(7).trim()
           } else if (line.startsWith('data: ')) {
             const data = line.slice(6).trim()
-            if (eventType === 'job_id') setJobId(data)
+            if (eventType === 'job_id') { setJobId(data); capturedJobId = data }
             if (eventType === 'progress') {
               setAnalyzeProgress(prev => [...prev, data])
             }
+            if (eventType === 'section') {
+              const sectionData = JSON.parse(data)
+              setReport(prev => ({
+                ...(prev || {}),
+                ...sectionData,
+              }))
+            }
             if (eventType === 'done') {
-              console.log('done event data length:', data.length)
-              console.log('done event data first 100 chars:', data.slice(0, 100))
-              setReport(JSON.parse(data))
+              console.log('analysis done event received')
             }
             if (eventType === 'error') throw new Error(data)
             eventType = null
@@ -64,13 +71,14 @@ export default function App() {
         }
       }
     }
+    return capturedJobId
   }
 
-  async function runReadme() {
+  async function runReadme(resolvedJobId = null) {
     const res = await fetch(`${BACKEND}/generate-readme`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
-      body: JSON.stringify({ github_url: url.trim() }),
+      body: JSON.stringify({ github_url: url.trim(), job_id: resolvedJobId }),
     })
     if (!res.ok || !res.body) throw new Error(`backend responded ${res.status}`)
 
@@ -115,21 +123,27 @@ export default function App() {
     e.preventDefault()
     if (!url.trim() || status === 'running') return
     setStatus('running')
-    setJobId(null)
-    setReport(null)
     setReadme(null)
-    setAnalyzeProgress([])
     setReadmeProgress([])
     setError(null)
     setActiveTab('analysis')
+    // Only reset analysis state if we don't have a prior report
+    if (!report || Object.keys(report).length === 0) {
+      setJobId(null)
+      setReport(null)
+      setAnalyzeProgress([])
+    }
 
     try {
-      // Phase 1: always run analysis.
-      await runAnalysis()
+      let resolvedJobId = jobId
+      // Skip analysis if we already have a report from a prior run
+      if (!report || Object.keys(report).length === 0) {
+        resolvedJobId = await runAnalysis()
+      }
 
       // Phase 2: auto-run readme if checked.
       if (generateReadme) {
-        await runReadme()
+        await runReadme(resolvedJobId)
       }
 
       setStatus('done')
@@ -225,7 +239,7 @@ export default function App() {
             >
               Analysis
             </button>
-            {generateReadme && readme && (
+            {generateReadme && (readme || status === 'running') && (
               <button
                 className={activeTab === 'readme' ? `${styles.tab} ${styles.tabActive}` : styles.tab}
                 onClick={() => setActiveTab('readme')}
@@ -253,7 +267,7 @@ export default function App() {
           {generateReadme && (
             <div style={{ display: activeTab === 'readme' ? 'block' : 'none' }}>
               {readmeProgress.length > 0 && <ProgressLog events={readmeProgress} />}
-              {readme && <ReadmeView content={readme} />}
+              {readme && <ReadmeView content={readme} repoOwner={report?.repo_owner} />}
             </div>
           )}
 

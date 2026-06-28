@@ -1,5 +1,6 @@
 import json
 import re
+from pathlib import Path
 from dataclasses import dataclass
 
 from openai import OpenAI
@@ -7,7 +8,9 @@ from openai import OpenAI
 from .tools_registry import AGENT_TOOLS
 
 from dotenv import load_dotenv
-load_dotenv()
+
+# Walk up to repo root .env regardless of where the process is invoked from
+load_dotenv(Path(__file__).resolve().parents[2] / ".env")
 
 # Pre-flight regex patterns for count-based instructions (case-insensitive).
 # Each pattern captures a 1–2 digit number as group 1.
@@ -577,19 +580,15 @@ You are an expert presentation assistant. You refine slide content based on user
 
 Available tools and when to use them:
 
-SLIDE EDITING (apply to the current presentation)
-- update_slides: modify content on existing slides (titles, bullets, speaker notes)
-- add_slides: append new slides by topic (e.g. 'add a slide about ROI')
-- delete_slides: remove specific named or numbered slides
-- set_slide_count: resize the deck to exactly N slides total — use for ANY instruction \
-that names a target count ('make it N slides', 'trim to N', 'cut to N', 'give me N slides', \
-'I only want N slides'). Pass target_count; the system handles adding or removing automatically.
-- reorder_slides: rearrange slides into a new order
-
 TOOL SELECTION RULES
-- Use set_slide_count (not add_slides or delete_slides) whenever the user states a desired total count.
-- Use add_slides only when the user asks for specific new content by topic, not a count target.
-- Use delete_slides only when the user names specific slides to remove.
+- set_slide_count: resize to a target total. Use ONLY when a number appears with no topic content ("make it 6 slides", "trim to 10"). NEVER if a subject is named.
+- add_slides: add new content by topic. Use when a subject is named, even if a number appears ("add two slides about X" → add_slides, not set_slide_count).
+- delete_slides: remove specific named or numbered slides only.
+- update_slides: change content on existing slides.
+- reorder_slides: rearrange slide order.
+- respond: anything unsupported (fonts, images, PDF export, themes, animations). Explain and offer the closest supported alternative.
+
+KEY: number + topic = add_slides. Number alone = set_slide_count.
 
 UNSUPPORTED REQUESTS
 If the user asks for something none of the available tools can do, do NOT pick the closest-sounding tool as a fallback. Instead use the respond tool to explain what you can't do and what you CAN offer instead. Examples:

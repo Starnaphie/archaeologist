@@ -55,6 +55,7 @@ def _ensure_findings_contract(report_dict: dict, repo_source: str) -> FindingsSc
         {
             "setup_markdown": "",
             "files_used": [],
+            "skipped": True,
         },
     )
     report_dict.setdefault(

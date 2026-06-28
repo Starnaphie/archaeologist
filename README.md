@@ -1,230 +1,101 @@
 # archaeologist
 
-Generate AI-powered archaeology reports for Python repositories. Feed in a GitHub URL, get back an automated understanding of what the codebase does, how it's structured, and what work remains unfinished.
+A multi-agent pipeline that analyzes a GitHub repository and generates a downloadable slide deck — end to end, no human in the loop.
 
-## Demo
+## What it does
 
-https://youtu.be/7Rx5fHxdWVI
+Submit a GitHub URL and a presentation topic → the pipeline researches the repo, summarizes findings, generates a `.pptx`, and returns a presigned download URL.
+User (browser)
 
-NEW UPDATED DEMO: https://youtu.be/weYWSsgTvkg
+│
 
-## Tech stack
+▼
 
-### Backend
-| Library | Purpose |
-|---------|---------|
-| **FastAPI** | REST API framework with async support |
-| **uvicorn** | ASGI server for running FastAPI |
-| **Tree-sitter** (tree-sitter-python) | AST parsing for Python code extraction |
-| **FAISS** | Vector similarity search for code chunks |
-| **OpenAI** | LLM for report generation and embeddings |
-| **LangChain** | LLM orchestration and structured output |
-| **GitPython** | Repository cloning and management |
-| **pydantic** | Data validation and structured outputs |
-| **sse-starlette** | Server-Sent Events for progress streaming |
+API Gateway (POST /generate)
 
-### Frontend
-| Library | Purpose |
-|---------|---------|
-| **React** | UI component framework |
-| **Vite** | Build tool and dev server |
-| **Mermaid** | Dependency graph visualization |
+│
 
-## Top-level directory map
+▼
 
-```
-lambdas/    AWS Lambda service code for repository analysis, deck generation, orchestration, summaries, and URL generation
-infra/      AWS CDK infrastructure for API Gateway, Step Functions, Lambda functions, S3, and supporting resources
-frontend/   React/Vite web app for submitting generation requests and viewing results
-```
+Step Functions State Machine
+
+├── Archaeologist Lambda   (repo analysis → findings.json → S3)
+
+├── Summarizer Lambda      (findings → outline.json → S3)
+
+├── Slides Lambda          (outline → deck.pptx → S3)
+
+└── URL Generator Lambda   (presigned URL → returned to user)
 
 ## Project structure
+lambdas/
 
-```
-archaeologist/
-├── lambdas/
-│   ├── archaeologist/
-│   │   ├── main.py          FastAPI app with /analyze (SSE) and /report/{job_id} endpoints
-│   │   ├── ingestion.py     GitHub repo cloning and Python file discovery
-│   │   ├── parser.py        Tree-sitter AST parsing; extracts functions, classes, imports
-│   │   ├── embedder.py      OpenAI embeddings with FAISS indexing for similarity search
-│   │   ├── agent.py         Report generation pipeline: purpose, architecture, incomplete features
-│   │   ├── __init__.py      Package initialization
-│   │   ├── .env             Environment variables (OPENAI_API_KEY)
-│   │   ├── requirements.txt Python dependencies
-│   │   └── Dockerfile       Lambda container image definition
-│   ├── slides/              Slide/deck generation Lambda code and supporting assets
-│   ├── orchestrator/        API Gateway entry Lambda that starts the workflow
-│   ├── summarizer/          Summary/outline generation Lambda stub
-│   └── url_generator/       Presigned URL generation Lambda stub
-├── infra/
-│   ├── app.py               CDK app entrypoint
-│   ├── cdk.json             CDK configuration
-│   ├── requirements.txt     CDK Python dependencies
-│   └── stacks/              CDK stack definitions for pipeline and API resources
-├── frontend/
-│   ├── src/
-│   │   ├── App.jsx          Main form; SSE listener; state management
-│   │   ├── ReportView.jsx   Renders purpose, modules table, dependency graph, TODOs
-│   │   ├── ProgressLog.jsx  Real-time progress stream display
-│   │   ├── App.module.css   App styling
-│   │   ├── ReportView.module.css
-│   │   ├── ProgressLog.module.css
-│   │   └── main.jsx         React entry point
-│   ├── package.json         Dependencies: React, Vite, Mermaid
-│   ├── vite.config.js       Vite configuration
-│   └── index.html           HTML template
-├── start.sh                 Bash script to run backend + frontend concurrently
-├── README.md                This file
-├── DESIGN.md                Design rationale (Python-only, streaming, no persistence)
-└── LICENSE                  MIT License
-```
+archaeologist/   Repo analysis agent (LangChain, FAISS, OpenAI)
 
-## Prerequisites
+summarizer/      Findings → slide outline (4-pass GPT-4o pipeline)
 
-- **Python 3.12+**
-- **Node 18+** and **npm 9+**
-- **OpenAI API key** (required for embeddings and LLM calls)
+slides/          Outline → .pptx (python-pptx, layout builders)
 
-## Setup and installation
+url_generator/   Presigned S3 URL generator
 
-### 1. Clone the repository
+orchestrator/    Step Functions trigger (API Gateway entry point)
+
+status/          Execution status poller (frontend polls this)
+
+shared/          S3 I/O, schemas, validation (shared across all Lambdas)
+
+evals/             Eval suite for archaeologist and slides pipeline
+
+infra/             AWS CDK stacks (Step Functions, Lambda, S3, API Gateway)
+
+frontend/          React/Vite UI with Analyze, README, and Slides modes
+
+## Local setup
+
 ```bash
-git clone https://github.com/yourusername/archaeologist.git
-cd archaeologist
+# 1. Clone and create venv
+python3 -m venv .venv
+source .venv/bin/activate
+
+# 2. Install dependencies
+pip install -r requirements.txt
+cd frontend && npm install && cd ..
+
+# 3. Configure environment
+cp .env.example .env
+# Fill in OPENAI_API_KEY in .env
+
+# 4. Start local dev servers
+bash start.sh
 ```
 
-### 2. Backend setup
+Runs the archaeologist FastAPI backend on `http://localhost:8000` and the Vite frontend on `http://localhost:5173`.
+
+## Eval suite
+
 ```bash
-# Create and activate virtual environment
-python3 -m venv lambdas/archaeologist/venv
-source lambdas/archaeologist/venv/bin/activate  # On Windows: lambdas\archaeologist\venv\Scripts\activate
+# Smoke test (no API calls)
+python -m evals.smoke_test
 
-# Install dependencies
-pip install -r lambdas/archaeologist/requirements.txt
+# Slides pipeline eval
+python -m evals.run_evals --mode pipeline --topic "RAG" --audience "engineers"
 
-# Set up environment variables
-cp lambdas/archaeologist/.env.example lambdas/archaeologist/.env
-# Edit lambdas/archaeologist/.env and add your OpenAI API key:
-# OPENAI_API_KEY=sk-...
+# Archaeologist eval
+python -m evals.run_evals --mode archaeologist --repo-root .
+
+# Tool selection eval
+python -m evals.run_evals --mode tool-calls
 ```
 
-### 3. Frontend setup
-```bash
-cd frontend
-npm install
-cd ..
-```
+## Deploy to AWS
 
-### 4. Running the application
+See [infra/DEPLOY.md](infra/DEPLOY.md).
 
-**Option A: Using the startup script (recommended)**
-```bash
-./start.sh
-```
-This spawns the FastAPI backend on `http://localhost:8000` and the React dev server on `http://localhost:5173`.
+## Environment variables
 
-**Option B: Manual startup**
-```bash
-# Terminal 1: Backend
-source lambdas/archaeologist/venv/bin/activate
-uvicorn lambdas.archaeologist.main:app --reload
-
-# Terminal 2: Frontend
-cd frontend
-npm run dev
-```
-
-## How it works
-
-The analysis pipeline runs in four stages:
-
-### 1. Ingestion
-Clone the target GitHub repository and discover all Python files, excluding virtual environments, node_modules, test directories, and pycache. Returns a manifest with file paths and total file count.
-
-### 2. Parsing & Embedding
-Use Tree-sitter to parse each Python file and extract top-level functions and classes with their docstrings. Build a symbol map of all imports (internal and external). Generate vector embeddings of code chunks using OpenAI's `text-embedding-3-small` model (1536 dimensions) and index them with FAISS for semantic search.
-
-### 3. Agent Reasoning
-The agent runs three parallel analysis steps:
-- **Purpose**: Retrieve top 10 code chunks semantically similar to "what does this project do," then ask Claude to infer the project's 1-3 sentence purpose and a ≤15 word one-liner.
-- **Architecture**: For each file, retrieve its top 3 code chunks, then summarize each module in one sentence.
-- **Incomplete Features**: Find code chunks with TODO, FIXME, NotImplemented, or empty pass stubs. Ask Claude to describe each as a user-readable feature gap.
-- **Dependency Graph**: Build a Mermaid diagram of internal module dependencies (max 20 nodes, truncated if larger).
-
-### 4. Report Generation
-Return a JSON report containing all analysis results. The frontend streams progress events via SSE and renders the final report with formatted tables, a module dependency graph, and a checklist of unfinished work.
-
-## API reference
-
-### POST /analyze
-Submit a GitHub URL and receive a streaming JSON event source.
-
-**Request body:**
-```json
-{
-  "github_url": "https://github.com/owner/repo"
-}
-```
-
-**SSE event shapes:**
-
-| Event | Data | Notes |
-|-------|------|-------|
-| `job_id` | UUID string | Unique identifier for this analysis run |
-| `progress` | String | Human-readable stage update (e.g., "Cloning repo...", "Parsing 47 files...") |
-| `done` | JSON string | Full report (see below) |
-
-**Report JSON shape:**
-```json
-{
-  "purpose": "String describing what the project does (1-3 sentences)",
-  "one_liner": "Brief description (≤15 words)",
-  "modules": [
-    {
-      "name": "relative/file/path.py",
-      "description": "One-sentence summary"
-    }
-  ],
-  "incomplete_features": [
-    "Feature gap 1",
-    "Feature gap 2"
-  ],
-  "dependency_graph": "graph LR\n  ..."
-}
-```
-
-### GET /report/{job_id}
-Retrieve a cached report by job ID.
-
-**Response:** Same JSON shape as the `done` event above.
-
-## Scope and known limits
-
-- **Python repositories only** — Other languages not supported in the MVP.
-- **Up to ~500 files** — No hard limit, but performance degrades with very large repos.
-- **3-minute timeout** — Long-running analyses may be interrupted.
-- **No authentication** — All endpoints are public.
-- **No persistence** — Reports exist only in memory during the session. Restarting the server clears all cached reports. No database, no user accounts.
-- **Dependency graph truncated to 20 nodes** — Larger codebases show only the first 20 internal modules.
-- **8000-token limit per code chunk** — Chunks are truncated for embedding efficiency.
-
-## Roadmap
-
-Post-MVP features planned or under consideration:
-
-- **Multi-agent system** — Specialized agents for different analysis tasks (testing patterns, API design, performance bottlenecks).
-- **README generation** — Auto-generate project README from the analysis.
-- **Interactive Q&A** — Chat interface to ask follow-up questions about the codebase.
-- **Timeline visualization** — Show commit history and refactoring patterns over time.
-- **Multi-language support** — Extend AST parsing to JavaScript, Go, Rust, etc.
-- **Persistence layer** — Save reports to a database; support user accounts and saved analyses.
-- **Incremental updates** — Diff-based re-analysis for updated repositories.
-
-## Contributing
-
-Contributions welcome! Please submit issues and pull requests on [GitHub](https://github.com/yourusername/archaeologist).
-
-## License
-
-MIT License — see [LICENSE](LICENSE) for details.
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `OPENAI_API_KEY` | Yes | OpenAI API key for all LLM calls |
+| `PIPELINE_BUCKET` | Yes (AWS) | S3 bucket name provisioned by CDK |
+| `AWS_REGION` | No | AWS region (default: us-east-1) |
+| `S3_ENDPOINT_URL` | No | LocalStack endpoint for local testing |

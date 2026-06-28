@@ -25,11 +25,13 @@ class RepoOwner(TypedDict):
 class SetupInstructions(TypedDict):
     setup_markdown: str
     files_used: List[str]
+    skipped: bool
 
 
 class FolderNode(TypedDict):
     path: str
     description: str
+    level: int
     children: List[dict]
 
 

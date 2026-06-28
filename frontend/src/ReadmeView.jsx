@@ -2,7 +2,21 @@ import { useState } from 'react'
 import { marked } from 'marked'
 import styles from './ReadmeView.module.css'
 
-export default function ReadmeView({ content }) {
+function buildMarkedWithImageBase(repoOwner, repoName) {
+  const renderer = new marked.Renderer()
+  renderer.image = ({ href, title, text }) => {
+    let src = href
+    // Convert relative paths to absolute GitHub raw URLs if we have repo info
+    if (repoOwner && repoName && href && !href.startsWith('http') && !href.startsWith('//') && !href.startsWith('data:')) {
+      src = `https://raw.githubusercontent.com/${repoOwner}/${repoName}/HEAD/${href.replace(/^\.\//, '')}`
+    }
+    const titleAttr = title ? ` title="${title}"` : ''
+    return `<img src="${src}" alt="${text || ''}"${titleAttr} style="max-width:100%;border-radius:4px;" />`
+  }
+  return { renderer }
+}
+
+export default function ReadmeView({ content, repoOwner }) {
   const [copied, setCopied] = useState(false)
 
   async function onCopy() {
@@ -20,7 +34,7 @@ export default function ReadmeView({ content }) {
     clean = clean.split('\n').slice(1).join('\n')
     clean = clean.slice(0, clean.lastIndexOf('```'))
   }
-  const html = marked.parse(clean)
+  const html = marked.parse(clean, buildMarkedWithImageBase(repoOwner?.owner, repoOwner?.repo_name))
 
   return (
     <div className={styles.wrapper}>
